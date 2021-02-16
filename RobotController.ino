@@ -7,20 +7,16 @@
 
 #define FREQUENCY           50
 
-//Servo myservo;  // create servo object to control a servo
-// twelve servo objects can be created on most boards
-
-boolean shouldMoveForward = false;
-boolean shouldMoveBackward = false;
+bool shouldMoveForward = false; // variable to decide if motor should run on main loop
+bool shouldMoveBackward = false; // variable to decide if motor should run on main loop
 int pos = 300;    // variable to store the servo position
-int motorA = 15;
+int motorA = 15; // denotes the pin on the PCA9685 that the motor is connected to
 int motorB = 11;
 int motorC = 7;
 
 Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver();
 
 void setup() {
-  //myservo.attach(8);  // attaches the servo on pin 8 to the servo object
   Serial.begin(9600);
   Serial.print("Monitor Connected");
 
@@ -60,7 +56,6 @@ void loop() {
       case 'I':
         shouldMoveBackward = false;
         shouldMoveForward = false;
-        // pwm.setPWM(motorC, 0, pos);
         break;
       default:
         break;
@@ -78,10 +73,9 @@ void loop() {
   }
 }
 
+// Base64 decoding:
 // int inputStringLength = strlen(data);
-
 // int decodedLength = Base64.decodedLength(data, inputStringLength);
-
 // char decodedString[decodedLength];
 // Base64.decode(decodedString, data, inputStringLength);
 // Serial.println(decodedString);
