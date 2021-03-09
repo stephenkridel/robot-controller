@@ -9,21 +9,57 @@
 Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver();
 
 class Motor {
-  int motorNum;
+  int motorNum; // pin on the PCCA9685 the motor is connected to
   bool shouldMoveForward = false;
   bool shouldMoveBackward = false;
-  int pos = 300;
-  int maxPos = 500;
-  int minPos = 100;
-  int motorDelay;
+  const int initialPosition = 300;
+  int pos = initialPosition;
+  const int maxPos = 500;
+  const int minPos = 100;
+  int motorDelay; // speeds up and slows down movement. Recommended between 10 to 25.
+  char forwardInput;
+  char backwardInput;
+  char stopInput;
+  char prevState;
   
   public:
-    Motor(int a, int b)
+    Motor(int a, int b, char c, char d, char e)
     {
       motorNum = a;
       motorDelay = b;
+      forwardInput = c;
+      backwardInput = d;
+      stopInput = e;
     }
 
+    void moveToPosition(int positionToMoveTo) {
+      if (positionToMoveTo > minPos && positionToMoveTo < maxPos) {
+        pwm.setPWM(motorNum, 0, positionToMoveTo);
+      }
+    }
+
+    void setInitialPosition() {
+      pwm.setPWM(motorNum, 0, initialPosition);
+    }
+
+    void loop(char data) {
+      if (data != prevState) {
+        if (data == forwardInput){
+          moveForward();
+          Serial.println("Forward");
+        } else if (data == backwardInput){
+          moveBackward();
+          Serial.println("Backward");
+        } else if (data == stopInput) {
+          stopMotor();
+          Serial.println("Stop");
+        }
+      }
+      runMotor();
+      prevState = data;
+    }
+
+  private:
     void moveForward() {
       shouldMoveForward = true;
     }
@@ -37,23 +73,25 @@ class Motor {
       shouldMoveForward = false;
     }
 
-    void loop() {
+    void runMotor() {
       if (shouldMoveForward && pos < maxPos) {
-          pos++;
-          pwm.setPWM(motorNum, 0, pos);
-          delay(motorDelay);
+        pos++;
+        pwm.setPWM(motorNum, 0, pos);
+        delay(motorDelay);
       } else if (shouldMoveBackward && pos > minPos) {
-          pos--;
-          pwm.setPWM(motorNum, 0, pos);
-          delay(motorDelay);
+        pos--;
+        pwm.setPWM(motorNum, 0, pos);
+        delay(motorDelay);
       }
     }
 };
 
-Motor elbow(15, 15);
-Motor wrist(11, 15);
-Motor gripper(7, 15);
-Motor forearm(3, 15);
+Motor elbow(15, 15, 'C', 'B', 'S');
+Motor wrist(11, 15, 'X', 'Y', 'S');
+Motor gripper(7, 15, 'G', 'R', 'S');
+Motor forearm(3, 15, 'F', 'A', 'S');
+
+Motor motorArr[4] = {elbow, wrist, gripper, forearm};
 
 void setup() {
   // put your setup code here, to run once:
@@ -62,50 +100,24 @@ void setup() {
 
   pwm.begin();
   pwm.setPWMFreq(FREQUENCY);
+
+  Serial.println(sizeof(motorArr)/sizeof(motorArr[0]));
+
+  for (int i = 0; i < sizeof(motorArr)/sizeof(motorArr[0]); i++) {
+    motorArr[i].setInitialPosition();
+    delay(250);
+  }
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
-    if (Serial.available() > 0) {
-    char data = Serial.read();
+  char data;
+  if (Serial.available() > 0) {
+    data = Serial.read();
     Serial.println(data);
-    switch (data) {
-      case 'S':
-        elbow.stopMotor();
-        wrist.stopMotor();
-        gripper.stopMotor();
-        forearm.stopMotor();
-        break;
-      case 'C':
-        elbow.moveForward();
-        break;
-      case 'B':
-        elbow.moveBackward();
-        break;
-      case 'Y':
-        wrist.moveForward();
-        break;
-      case 'X':
-        wrist.moveBackward();
-        break;
-      case 'G':
-        gripper.moveForward();
-        break;
-      case 'R':
-        gripper.moveBackward();
-        break;
-      case 'F':
-        forearm.moveForward();
-        break;
-      case 'A':
-        forearm.moveBackward();
-        break;
-      default:
-        break;
-    }
   }
-  elbow.loop();
-  wrist.loop();
-  forearm.loop();
-  gripper.loop();
+
+  for (int i = 0; i < sizeof(motorArr)/sizeof(motorArr[0]); i++) {
+    motorArr[i].loop(data);
+  }
 }
