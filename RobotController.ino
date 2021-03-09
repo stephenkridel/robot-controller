@@ -1,22 +1,62 @@
-
 #include <Servo.h>
 // #include <Base64.h>
 #include <SoftwareSerial.h>
 #include <Wire.h>
 #include <Adafruit_PWMServoDriver.h>
 
-#define FREQUENCY           50
-
-bool shouldMoveForward = false; // variable to decide if motor should run on main loop
-bool shouldMoveBackward = false; // variable to decide if motor should run on main loop
-int pos = 300;    // variable to store the servo position
-int motorA = 15; // denotes the pin on the PCA9685 that the motor is connected to
-int motorB = 11;
-int motorC = 7;
+#define FREQUENCY   50
 
 Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver();
 
+class Motor {
+  int motorNum;
+  bool shouldMoveForward = false;
+  bool shouldMoveBackward = false;
+  int pos = 300;
+  int maxPos = 500;
+  int minPos = 100;
+  int motorDelay;
+  
+  public:
+    Motor(int a, int b)
+    {
+      motorNum = a;
+      motorDelay = b;
+    }
+
+    void moveForward() {
+      shouldMoveForward = true;
+    }
+
+    void moveBackward() {
+      shouldMoveBackward = true;
+    }
+
+    void stopMotor() {
+      shouldMoveBackward = false;
+      shouldMoveForward = false;
+    }
+
+    void loop() {
+      if (shouldMoveForward && pos < maxPos) {
+          pos++;
+          pwm.setPWM(motorNum, 0, pos);
+          delay(motorDelay);
+      } else if (shouldMoveBackward && pos > minPos) {
+          pos--;
+          pwm.setPWM(motorNum, 0, pos);
+          delay(motorDelay);
+      }
+    }
+};
+
+Motor elbow(15, 15);
+Motor wrist(11, 15);
+Motor gripper(7, 15);
+Motor forearm(3, 15);
+
 void setup() {
+  // put your setup code here, to run once:
   Serial.begin(9600);
   Serial.print("Monitor Connected");
 
@@ -25,57 +65,47 @@ void setup() {
 }
 
 void loop() {
-  if (Serial.available() > 0) {
-
+  // put your main code here, to run repeatedly:
+    if (Serial.available() > 0) {
     char data = Serial.read();
-
     Serial.println(data);
     switch (data) {
+      case 'S':
+        elbow.stopMotor();
+        wrist.stopMotor();
+        gripper.stopMotor();
+        forearm.stopMotor();
+        break;
       case 'C':
-        pwm.setPWM(motorA, 0, 500);
+        elbow.moveForward();
         break;
-      case'B':
-        pwm.setPWM(motorA, 0, 100);
-        break;
-      case 'X':
-        pwm.setPWM(motorB, 0, 500);
+      case 'B':
+        elbow.moveBackward();
         break;
       case 'Y':
-        pwm.setPWM(motorB, 0, 100);
+        wrist.moveForward();
         break;
-      case 'S':
-        pwm.setPWM(motorA, 0, 300);
-        pwm.setPWM(motorB, 0, 300);
+      case 'X':
+        wrist.moveBackward();
         break;
       case 'G':
-        shouldMoveBackward = true;
+        gripper.moveForward();
         break;
       case 'R':
-        shouldMoveForward = true;
+        gripper.moveBackward();
         break;
-      case 'I':
-        shouldMoveBackward = false;
-        shouldMoveForward = false;
+      case 'F':
+        forearm.moveForward();
+        break;
+      case 'A':
+        forearm.moveBackward();
         break;
       default:
         break;
     }
   }
-  if (shouldMoveForward && pos < 500) {
-    pos += 1;
-    pwm.setPWM(motorC, 0, pos);
-    delay(5);
-  }
-  if (shouldMoveBackward && pos > 100) {
-    pos -= 1;
-    pwm.setPWM(motorC, 0, pos);
-    delay(5);
-  }
+  elbow.loop();
+  wrist.loop();
+  forearm.loop();
+  gripper.loop();
 }
-
-// Base64 decoding:
-// int inputStringLength = strlen(data);
-// int decodedLength = Base64.decodedLength(data, inputStringLength);
-// char decodedString[decodedLength];
-// Base64.decode(decodedString, data, inputStringLength);
-// Serial.println(decodedString);
