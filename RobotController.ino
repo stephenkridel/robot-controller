@@ -14,7 +14,7 @@ class Motor {
   bool shouldMoveBackward = false;
   const int initialPosition = 300;
   int pos = initialPosition;
-  const int maxPos = 500;
+  const int maxPos = 450;
   const int minPos = 100;
   int motorDelay; // speeds up and slows down movement. Recommended between 10 to 25.
   char forwardInput;
@@ -46,13 +46,10 @@ class Motor {
       if (data != prevState) {
         if (data == forwardInput){
           moveForward();
-          Serial.println("Forward");
         } else if (data == backwardInput){
           moveBackward();
-          Serial.println("Backward");
         } else if (data == stopInput) {
           stopMotor();
-          Serial.println("Stop");
         }
       }
       runMotor();
@@ -88,8 +85,8 @@ class Motor {
 
 Motor elbow(15, 15, 'C', 'B', 'S');
 Motor wrist(11, 15, 'X', 'Y', 'S');
-Motor gripper(7, 15, 'G', 'R', 'S');
-Motor forearm(3, 15, 'F', 'A', 'S');
+Motor gripper(7, 5, 'G', 'R', 'S');
+Motor forearm(3, 5, 'F', 'A', 'S');
 
 Motor motorArr[4] = {elbow, wrist, gripper, forearm};
 
@@ -105,7 +102,7 @@ void setup() {
 
   for (int i = 0; i < sizeof(motorArr)/sizeof(motorArr[0]); i++) {
     motorArr[i].setInitialPosition();
-    delay(250);
+    delay(1000);
   }
 }
 
