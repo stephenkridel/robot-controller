@@ -14,3 +14,5 @@ As of writing this (3/9/21), the bulk of the code is one class called Motor. The
 3) The serial data character that runs the motor forward.
 4) The serial data character that runs the motor backward.
 5) The serial data character that stops the motor.
+
+*If you have questions, open an issue and I'll get back to you*
